@@ -1,16 +1,12 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
 
 Create a data directory, download compressed file and unzip
 
-```{r, echo=TRUE}
+
+```r
 if (!file.exists("./data/activity.csv")) {
   if(!file.exists("./data")) {dir.create("./data")}
   
@@ -25,7 +21,8 @@ if (!file.exists("./data/activity.csv")) {
 
 Here is a  function to check missing values in a column, to work with data tables
 (colvar is the column to work on, can be a string or an integer)
-```{r, echo=TRUE}
+
+```r
 totalMissingValues <- function(dTable, colvar) { 
     naStepsTrueFalse <- is.na(dTable[,colvar,with=FALSE])
   
@@ -35,17 +32,33 @@ totalMissingValues <- function(dTable, colvar) {
 
 
 Read in the data as a data table
-```{r, echo=TRUE}
+
+```r
 library(data.table)
 dt.Activity <- data.table(read.csv("./data/activity.csv"))
 ```
 
 ####Some initial observations of this data
-```{r, echo=TRUE}
-str(dt.Activity)
 
+```r
+str(dt.Activity)
+```
+
+```
+## Classes 'data.table' and 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+##  - attr(*, ".internal.selfref")=<externalptr>
+```
+
+```r
 steps_TotalMissingValues <- totalMissingValues(dt.Activity, "steps")
 print(c("Total NA steps:",steps_TotalMissingValues[1]), quote=FALSE)
+```
+
+```
+## [1] Total NA steps: 2304
 ```
 
 
@@ -53,7 +66,8 @@ print(c("Total NA steps:",steps_TotalMissingValues[1]), quote=FALSE)
 ## What is mean total number of steps taken per day?
 
 A histogram to show the variation
-```{r, echo=TRUE}
+
+```r
 stepsBydate <- dt.Activity[,.(Total=sum(steps)), by = date]
 
 hist(stepsBydate[Total != "NA",]$Total, 
@@ -70,17 +84,19 @@ rug(stepsBydate[Total != "NA",]$Total)
 abline(v = median(stepsBydate[Total != "NA",]$Total), col="magenta", lty = 2, lwd = 2)
 abline(v = mean(stepsBydate[Total != "NA",]$Total), col="green", lty = 3, lwd = 2)
 legend("topright", lty = 1, col = c("magenta", "green"), legend = c("median", "mean"))
-
 ```
 
-```{r}
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+
+
+```r
 stepsMean <- as.integer(mean(stepsBydate[Total != "NA",]$Total))
 stepsMedian <- median(stepsBydate[Total != "NA",]$Total)
 ```
 
-The mean total number of steps taken per day is `r stepsMean`. 
+The mean total number of steps taken per day is 10766. 
 
-The median is `r stepsMedian`.
+The median is 10765.
 
 
 
@@ -88,7 +104,8 @@ The median is `r stepsMedian`.
 
 A Time series plot of the average number of steps taken
 
-```{r}
+
+```r
 timeSeries <- dt.Activity[,.(AverageSteps = mean(steps, na.rm = TRUE)), by = interval]
 plot(timeSeries$interval, timeSeries$AverageSteps, type = "l",
      xlab = "Time of Day
@@ -102,11 +119,13 @@ maxAvStepsCoords <- timeSeries[AverageSteps == max(timeSeries$AverageSteps),]
 abline(v = maxAvStepsCoords$interval, col="magenta", lty = 2, lwd = 1)
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png) 
+
 [//]: (The 5-minute interval that, on average, contains the maximum number of steps)
 
 The time of day where there are, on average, the  
 most steps counted in a five minute interval: 
-`r maxAvStepsCoords$interval` (24-hour clock, hhmm format, no leading zeros)  
+835 (24-hour clock, hhmm format, no leading zeros)  
 
 
 
@@ -119,7 +138,8 @@ I have opted to utilise the timeSeries averages, such that
 for NA steps found in a particular interval the NA is replaced with the
 average steps over all days for that interval.
 
-```{r}
+
+```r
 dt.Act2 <- copy(dt.Activity)
 dt.Act2[,steps := as.numeric(steps)] # so steps accepts real numbers from averages
 for (i in 1:nrow(dt.Act2)) {
@@ -131,7 +151,8 @@ for (i in 1:nrow(dt.Act2)) {
 ```
 
 A histogram using the modified data, i.e. where NA values are replaced using the method above
-```{r}
+
+```r
 stepsBydate_NoNA <- dt.Act2[,.(Total=sum(steps)), by = date]
 hist(stepsBydate_NoNA$Total, 
      breaks = 8,
@@ -149,27 +170,78 @@ abline(v = mean(stepsBydate_NoNA$Total), col="green", lty = 3, lwd = 2)
 legend("topright", lty = 1, col = c("magenta", "green"), legend = c("median", "mean"))
 ```
 
-```{r}
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png) 
+
+
+```r
 stepsMeanNoNA <- as.integer(mean(stepsBydate_NoNA$Total))
 stepsMedianNoNA <- median(stepsBydate_NoNA$Total)
 ```
 
-With NA values replaced, we see that the mean is `r stepsMeanNoNA` and the median is `r stepsMedianNoNA`.
+With NA values replaced, we see that the mean is 10766 and the median is 1.0766189\times 10^{4}.
 
 As there is very little change between these figures and those of data with NA, it is quite possible that the intervals that hold NA values are intervals where very little activity happened anyway, e.g. during regular sleeping periods.
 
 For example
-```{r}
+
+```r
 head(dt.Activity)
+```
+
+```
+##    steps       date interval
+## 1:    NA 2012-10-01        0
+## 2:    NA 2012-10-01        5
+## 3:    NA 2012-10-01       10
+## 4:    NA 2012-10-01       15
+## 5:    NA 2012-10-01       20
+## 6:    NA 2012-10-01       25
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 Add columns to filter weekend dates
 
-```{r}
+
+```r
 library(lubridate)
+```
+
+```
+## 
+## Attaching package: 'lubridate'
+## 
+## The following objects are masked from 'package:data.table':
+## 
+##     hour, mday, month, quarter, wday, week, yday, year
+```
+
+```r
 library(dplyr)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following objects are masked from 'package:lubridate':
+## 
+##     intersect, setdiff, union
+## 
+## The following objects are masked from 'package:data.table':
+## 
+##     between, last
+## 
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 dt.Act3 <- dt.Act2[, day := weekdays(ymd(date))]
 for (i in 1:nrow(dt.Act3)) {
    whatDay <- dt.Act3[i]$day
@@ -198,7 +270,8 @@ timeSeries.wDay <- act3.wDay[,.(AverageSteps = mean(steps, na.rm = TRUE)), by = 
 ```
 
 Compare graphs of activity patterns between weekdays and weekends
-```{r}
+
+```r
 par(mfrow = c(2,1))
 
 plot(timeSeries.wEnd$interval, timeSeries.wEnd$AverageSteps, type = "l",
@@ -216,5 +289,6 @@ plot(timeSeries.wDay$interval, timeSeries.wDay$AverageSteps, type = "l",
      ylab = "Average Steps"
      )
 legend("topright", bty = "n", legend = "Weekdays")
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-13-1.png) 
